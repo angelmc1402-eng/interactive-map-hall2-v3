@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HALL 2 - Smart Interactive Map (All Available)</title>
+    <title>HALL 2 - Smart Interactive Map</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -23,6 +23,7 @@
         position: relative; overflow: hidden;
     }
 
+    /* EL MAPA (Arreglado el bug de resolución borrando will-change) */
     #container { 
         position: relative; 
         width: 100%; max-width: 1600px; 
@@ -30,7 +31,6 @@
         transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); 
         cursor: zoom-in;
         touch-action: none; 
-        will-change: transform;
     }
 
     #map-img { width: 100%; height: auto; display: block; user-select: none; -webkit-user-drag: none; }
@@ -55,7 +55,7 @@
         z-index: 999; border-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); background: rgba(46, 204, 113, 0.6);
     }
 
-    /* --- TOOLTIPS --- */
+    /* --- TOOLTIPS (Sin botón abajo) --- */
     .custom-tooltip-wrapper {
         position: absolute; bottom: 150%; left: 50%;
         transform: translateX(-50%) translateY(10px) scale(var(--tooltip-scale));
@@ -78,16 +78,9 @@
     .tooltip-label { color: var(--text-gray); font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
     .tooltip-value { font-size: 18px; font-weight: 800; color: #1f2937; text-align: center;}
     
-    .tooltip-footer { padding: 10px; font-size: 14px; font-weight: 800; color: white; background: var(--verde-deep); text-align: center; }
+    .tooltip-footer { padding: 12px; font-size: 14px; font-weight: 800; color: white; background: var(--verde-deep); text-align: center; }
     .mesa.agotada .tooltip-footer { background: var(--rojo-sold); }
     .mesa.commercial .tooltip-footer { background: #3498db; }
-
-    .btn-buy-table {
-        background: #111827; color: white; border: none; padding: 12px;
-        width: 100%; font-weight: 800; font-size: 13px; cursor: pointer;
-        transition: background 0.2s; 
-    }
-    .btn-buy-table:hover { background: var(--verde-base); }
 
     /* --- MENÚ LATERAL (VOLVER) --- */
     #side-menu {
@@ -155,11 +148,10 @@
                 else if (info.includes("RETRO")) { displaySection = "Retro & Fashion"; tableNum = parts[1]; }
                 else displaySection = "Diecast - Zone " + parts[1];
 
-                // PRECIOS Y CATEGORÍAS (Basado en la última distribución)
+                // PRECIOS Y CATEGORÍAS
                 let type = "Collector Table";
                 let price = "70,00 €";
 
-                // Si son Comerciales (Diecast G y H, Figures C y D)
                 if (/DIECAST-(G|H)/.test(info) || /FIGURES-(C|D)/.test(info)) {
                     type = "Commercial Table";
                     price = "175,00 €";
@@ -167,8 +159,8 @@
                 }
 
                 let footerText = `${type}  •  ${price}`;
-                let botonSeleccionar = `<button class="btn-buy-table" onclick="enviarAShopify('${info}', event)">🛒 SELECCIONAR MESA</button>`;
 
+                // TOOLTIP LIMPIO (Sin botón de Shopify)
                 m.innerHTML = `
                     <div class="custom-tooltip-wrapper">
                         <div class="tooltip-row">
@@ -176,7 +168,6 @@
                             <div class="tooltip-cell"><span class="tooltip-label">Table</span><span class="tooltip-value">${tableNum}</span></div>
                         </div>
                         <div class="tooltip-footer">${footerText}</div>
-                        ${botonSeleccionar}
                     </div>`;
             });
             
@@ -203,23 +194,14 @@
                         if (estado.includes("VENDIDA") || estado.includes("SOLD")) {
                             mesaDiv.classList.add('agotada');
                             mesaDiv.querySelector('.tooltip-footer').innerText = "SOLD OUT";
-                            const btn = mesaDiv.querySelector('.btn-buy-table');
-                            if(btn) btn.style.display = 'none'; 
                         } else {
                             mesaDiv.classList.remove('agotada');
-                            // Nota: Si por algún casual se "devuelve" la mesa y la pones disponible
-                            // El botón volvería a aparecer si recargan la página.
                         }
                     }
                 }
             });
         } catch (err) { console.error("Error sincronizando:", err); }
     }
-
-    window.enviarAShopify = function(mesaId, event) {
-        event.stopPropagation();
-        window.parent.postMessage({ action: 'seleccionar_mesa_mapa', mesa_id: mesaId }, '*');
-    };
 
     // ==========================================
     // 2. MOTOR DE ZOOM Y PAN (ARRASTRAR)
