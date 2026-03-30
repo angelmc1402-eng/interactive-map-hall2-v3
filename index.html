@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HALL 2 - Puzzle Builder Pro</title>
+    <title>HALL 2 V2 - Puzzle Builder Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -25,7 +24,7 @@
     #container { position: relative; transform-origin: 0 0; transition: transform 0.05s ease-out; display: inline-block; }
     img { display: block; image-rendering: high-quality; max-width: none; pointer-events: none; user-select: none; }
 
-    /* MESAS (Las piezas del puzzle) */
+    /* MESAS */
     .mesa { 
         position: absolute; 
         border: 2px solid var(--verde-base); 
@@ -56,18 +55,6 @@
     
     .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
     
-    .section-group { margin-bottom: 15px; }
-    .group-title { font-size: 11px; font-weight: 800; color: #888; margin-bottom: 5px; letter-spacing: 1px; }
-    
-    .piece-btn {
-        display: flex; justify-content: space-between; align-items: center;
-        width: 100%; padding: 8px 12px; margin-bottom: 6px;
-        background: #f7f7f7; border: 1px solid #ddd; border-radius: 6px;
-        cursor: pointer; transition: all 0.1s; font-size: 12px; font-weight: 600; color: #444;
-    }
-    .piece-btn:hover { background: #e0e0e0; transform: translateX(2px); border-color: #bbb; }
-    .tag-h { background: #81ecec; color: #00cec9; padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: bold;}
-
     .btn-magic {
         width: 100%; padding: 12px; background: #8e44ad; color: white;
         border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
@@ -76,7 +63,10 @@
     }
     .btn-magic:hover { background: #9b59b6; transform: translateY(-2px); }
 
-    /* PROPIEDADES (FLOTANTE) */
+    .section-list { font-size: 11px; font-weight: bold; color: #555; line-height: 1.6; }
+    .section-list span { color: #8e44ad; }
+
+    /* PROPIEDADES FLOTANTE */
     #prop-float {
         position: fixed; top: 20px; right: 20px; background: white; padding: 15px;
         border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 20000;
@@ -103,24 +93,28 @@
 <body>
 
     <div id="palette">
-        <h3>🧩 Puzzle Builder</h3>
+        <h3>🧩 Builder V2</h3>
         
-        <button class="btn-magic" onclick="generarPuzzleMasivo()">✨ Generar Puzzle (480)</button>
+        <button class="btn-magic" onclick="generarPuzzleMasivo()">✨ Generar Puzzle (474)</button>
 
         <div class="scroll-area">
-            <div class="section-group">
-                <div class="group-title">DIECAST (A - I)</div>
-                <div id="btn-container-die"></div>
-            </div>
-
-            <div class="section-group">
-                <div class="group-title">FIGURES (A - D)</div>
-                <div id="btn-container-fig"></div>
-            </div>
-
-            <div class="section-group">
-                <div class="group-title">MANGA & COMIC (A - B)</div>
-                <div id="btn-container-man"></div>
+            <div style="margin-bottom: 10px; font-size: 12px; font-weight: 800; color: #333;">Distribución cargada:</div>
+            <div class="section-list">
+                MANGA A (Col): <span>26 mesas</span><br>
+                MANGA B (Col): <span>26 mesas</span><br>
+                DIECAST A (Col): <span>26 mesas</span><br>
+                DIECAST B (Col): <span>26 mesas</span><br>
+                RETRO/FASHION: <span>36 mesas</span><br>
+                DIECAST C (Col): <span>36 mesas</span><br>
+                DIECAST D (Col): <span>36 mesas</span><br>
+                DIECAST E (Col): <span>32 mesas</span><br>
+                DIECAST F (Col): <span>32 mesas</span><br>
+                DIECAST G (Com): <span>36 mesas</span><br>
+                DIECAST H (Com): <span>36 mesas</span><br>
+                FIGURES A (Col): <span>32 mesas</span><br>
+                FIGURES B (Col): <span>32 mesas</span><br>
+                FIGURES C (Com): <span>32 mesas</span><br>
+                FIGURES D (Com): <span>36 mesas</span>
             </div>
         </div>
         <div style="font-size:11px; color:#999; margin-top:10px; text-align:center; border-top:1px solid #eee; padding-top:10px; line-height: 1.5;">
@@ -146,7 +140,7 @@
 
     <div id="viewport">
         <div id="container">
-            <img id="map-img" src="Hall 2.png" alt="Map Hall 2">
+            <img id="map-img" src="Hall 2.png" alt="Map Hall 2 V2">
             <div id="capa-mesas"></div> 
         </div>
     </div>
@@ -154,16 +148,28 @@
     <textarea id="clipboard-area"></textarea>
 
 <script>
-    // --- TAMAÑOS EXACTOS ---
+    // --- TAMAÑOS EXACTOS (NUEVOS) ---
     const SIZE_H = { w: 1.17, h: 0.41 }; // Horizontal
     const SIZE_V = { w: 0.34, h: 1.38 }; // Vertical
 
-    // --- NUEVA ESTRUCTURA DE LETRAS ---
-    const GROUPS = {
-        'DIECAST': ['A','B','C','D','E','F','G','H','I'],
-        'FIGURES': ['A','B','C','D'],
-        'MANGACOM': ['A','B']
-    };
+    // --- NUEVA DISTRIBUCIÓN V2 ---
+    const SECCIONES = [
+        { idPrefix: 'MANGACOM-A', count: 26 },
+        { idPrefix: 'MANGACOM-B', count: 26 },
+        { idPrefix: 'DIECAST-A', count: 26 },
+        { idPrefix: 'DIECAST-B', count: 26 },
+        { idPrefix: 'RETRO', count: 36 }, // Sin letra comercial/collector
+        { idPrefix: 'DIECAST-C', count: 36 },
+        { idPrefix: 'DIECAST-D', count: 36 },
+        { idPrefix: 'DIECAST-E', count: 32 },
+        { idPrefix: 'DIECAST-F', count: 32 },
+        { idPrefix: 'DIECAST-G', count: 36 },
+        { idPrefix: 'DIECAST-H', count: 36 },
+        { idPrefix: 'FIGURES-A', count: 32 },
+        { idPrefix: 'FIGURES-B', count: 32 },
+        { idPrefix: 'FIGURES-C', count: 32 },
+        { idPrefix: 'FIGURES-D', count: 36 }
+    ];
 
     let scale = 0.2;
     const container = document.getElementById('container');
@@ -178,99 +184,50 @@
     let dragOffset = { x: 0, y: 0 };
 
     window.onload = () => {
-        generateButtons();
         if(mapImg.complete) init();
         else mapImg.onload = init;
     };
 
     async function init() {
         fit();
-        try {
-            const resp = await fetch('mesas.html?v=' + Date.now());
-            if(resp.ok) {
-                capaMesas.innerHTML = await resp.text();
-                document.querySelectorAll('.mesa').forEach(addInteractions);
-            }
-        } catch(e) {}
         viewport.addEventListener('wheel', handleWheel, { passive: false });
     }
 
-    // --- BOTÓN MÁGICO: GENERAR LAS 480 MESAS ---
+    // --- BOTÓN MÁGICO: GENERAR LAS 474 MESAS ---
     window.generarPuzzleMasivo = function() {
-        if(!confirm("Esto creará las 480 mesas ordenadas en filas arriba a la izquierda. ¿Empezamos?")) return;
+        if(document.querySelectorAll('.mesa').length > 0) {
+            if(!confirm("Ya hay mesas en el tablero. ¿Quieres volver a generar todo? (Se ignorarán las que ya existan con el mismo ID)")) return;
+        }
         
-        let startTop = 2; // Empezamos en el 2% de altura
+        let startTop = 2; // Empezamos cerca del margen superior
         
-        Object.keys(GROUPS).forEach(cat => {
-            GROUPS[cat].forEach(letra => {
-                let startLeft = 2; // Empezamos en el 2% de ancho para cada letra
+        SECCIONES.forEach(sec => {
+            let startLeft = 2; // Empezamos en el margen izquierdo
+            
+            for(let i=1; i<=sec.count; i++) {
+                const idName = `${sec.idPrefix}-${i}`;
                 
-                for(let i=1; i<=32; i++) {
-                    const idName = `${cat}-${letra}-${i}`;
-                    
-                    // Comprobar si ya existe para no duplicar
-                    if(document.querySelector(`[data-info="${idName}"]`)) continue;
+                // Comprobar si ya existe para no duplicar
+                if(document.querySelector(`[data-info="${idName}"]`)) continue;
 
-                    const div = document.createElement('div');
-                    div.className = 'mesa';
-                    div.setAttribute('data-info', idName);
-                    
-                    div.style.width = SIZE_H.w + '%';
-                    div.style.height = SIZE_H.h + '%';
-                    div.style.top = startTop.toFixed(2) + '%';
-                    div.style.left = startLeft.toFixed(2) + '%';
-
-                    capaMesas.appendChild(div);
-                    addInteractions(div);
-                    
-                    startLeft += (SIZE_H.w + 0.1); // Separación horizontal
-                }
-                startTop += (SIZE_H.h + 0.3); // Separación vertical para la siguiente letra
-            });
+                const div = document.createElement('div');
+                div.className = 'mesa';
+                div.setAttribute('data-info', idName);
+                
+                div.style.width = SIZE_H.w + '%';
+                div.style.height = SIZE_H.h + '%';
+                div.style.top = startTop.toFixed(2) + '%';
+                div.style.left = startLeft.toFixed(2) + '%';
+                
+                capaMesas.appendChild(div);
+                addInteractions(div);
+                
+                startLeft += (SIZE_H.w + 0.15); // Separación horizontal entre mesas
+            }
+            startTop += (SIZE_H.h + 0.8); // Separación vertical de fila para la siguiente letra
         });
 
-        alert("¡Puzzle generado! Tienes las piezas arriba a la izquierda listas para colocar.");
-    }
-
-    function generateButtons() {
-        const cDie = document.getElementById('btn-container-die');
-        GROUPS['DIECAST'].forEach(L => createBtn(cDie, `DIECAST-${L}`));
-
-        const cFig = document.getElementById('btn-container-fig');
-        GROUPS['FIGURES'].forEach(L => createBtn(cFig, `FIGURES-${L}`));
-
-        const cMan = document.getElementById('btn-container-man');
-        GROUPS['MANGACOM'].forEach(L => createBtn(cMan, `MANGACOM-${L}`));
-    }
-
-    function createBtn(container, label) {
-        const btn = document.createElement('div');
-        btn.className = 'piece-btn';
-        btn.innerHTML = `<span>${label}</span> <span class="tag-h">+1 MESA</span>`;
-        btn.onclick = () => spawnTable(label + '-1');
-        container.appendChild(btn);
-    }
-
-    window.spawnTable = function(idName) {
-        const div = document.createElement('div');
-        div.className = 'mesa';
-        div.setAttribute('data-info', idName);
-        
-        const rect = viewport.getBoundingClientRect();
-        const centerX = (rect.width / 2 - container.getBoundingClientRect().left) / scale;
-        const centerY = (rect.height / 2 - container.getBoundingClientRect().top) / scale;
-
-        const leftP = (centerX / mapImg.naturalWidth) * 100;
-        const topP = (centerY / mapImg.naturalHeight) * 100;
-
-        div.style.width = SIZE_H.w + '%';
-        div.style.height = SIZE_H.h + '%';
-        div.style.top = topP.toFixed(2) + '%';
-        div.style.left = leftP.toFixed(2) + '%';
-
-        capaMesas.appendChild(div);
-        addInteractions(div);
-        selectMesa(div);
+        alert("¡Puzzle generado! Las 474 piezas están arriba a la izquierda.");
     }
 
     // --- INTERACCIONES ---
