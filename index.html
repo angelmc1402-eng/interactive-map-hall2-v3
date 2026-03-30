@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HALL 2 - Ultimate Precision Map</title>
+    <title>HALL 2 - Ultimate Precision Map V5</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -12,8 +12,7 @@
         --rojo-sold: #e74c3c;
         --text-gray: #95a5a6;
         --fuente: 'Inter', sans-serif;
-        --tooltip-scale: 1; 
-        --map-zoom: 1; /* NUEVO: Variable dinámica para evitar que los bordes engorden */
+        --map-scale: 1; /* Variable dinámica para la contra-escala */
     }
 
     body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #e5e7eb; font-family: var(--fuente); }
@@ -23,73 +22,88 @@
         position: relative; overflow: hidden;
     }
 
+    /* EL MAPA: Como en el Builder, tamaño libre y escalado por transform */
     #container { 
         position: absolute; 
         top: 0; left: 0;
-        width: 100vw; 
         transform-origin: 0 0; 
         transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
         cursor: crosshair; 
         touch-action: none; 
+        display: inline-block;
     }
 
-    #map-img { width: 100%; height: auto; display: block; user-select: none; -webkit-user-drag: none; }
+    #map-img { display: block; image-rendering: high-quality; max-width: none; user-select: none; -webkit-user-drag: none; }
 
+    /* CURSORES */
     body.is-state-1 #container, body.is-state-2 #container { cursor: grab; }
     body.is-state-1 #container:active, body.is-state-2 #container:active { cursor: grabbing; }
 
-    /* --- MESAS (BORDES INTELIGENTES ANTI-DISTORSIÓN) --- */
+    /* --- MESAS (Idénticas al Builder) --- */
     .mesa { 
         position: absolute; 
-        /* Dividimos el grosor entre el zoom actual para que siempre se vea de 1.5px visuales */
-        border: calc(1.5px / var(--map-zoom)) solid var(--verde-base); 
-        background: rgba(46, 204, 113, 0.25); 
+        border: 2px solid var(--verde-base); 
+        background: rgba(46, 204, 113, 0.3); 
         box-sizing: border-box; 
-        /* Dividimos el radio para que no queden como pastillas redondas al acercarse */
-        border-radius: calc(2px / var(--map-zoom)); 
+        border-radius: 2px; 
         pointer-events: none; 
     }
     
     body.is-state-1 .mesa, body.is-state-2 .mesa { pointer-events: auto; cursor: pointer; }
     
-    .mesa.commercial { border-color: #3498db; background: rgba(52, 152, 219, 0.25); }
+    .mesa.commercial { border-color: #3498db; background: rgba(52, 152, 219, 0.3); }
     .mesa.agotada { background: rgba(231, 76, 60, 0.4) !important; border-color: var(--rojo-sold) !important; cursor: not-allowed; }
 
     body.is-state-1 .mesa:hover, body.is-state-1 .mesa:active,
     body.is-state-2 .mesa:hover, body.is-state-2 .mesa:active { 
         z-index: 999; border-color: white; 
-        border-width: calc(2.5px / var(--map-zoom)); /* Borde hover constante */
-        box-shadow: 0 0 calc(10px / var(--map-zoom)) rgba(0,0,0,0.4); /* Sombra constante */
-        background: rgba(46, 204, 113, 0.6);
+        box-shadow: 0 0 20px rgba(0,0,0,0.5); background: rgba(46, 204, 113, 0.7);
     }
-    body.is-state-1 .mesa.commercial:hover, body.is-state-2 .mesa.commercial:hover { background: rgba(52, 152, 219, 0.6); }
+    body.is-state-1 .mesa.commercial:hover, body.is-state-2 .mesa.commercial:hover { background: rgba(52, 152, 219, 0.7); }
 
-    /* --- TOOLTIPS --- */
+    /* --- TOOLTIPS INTELIGENTES --- */
+    /* Usamos calc(1 / var(--map-scale)) para que los tooltips nunca se vean gigantes ni enanos */
     .custom-tooltip-wrapper {
         position: absolute; bottom: 150%; left: 50%;
-        transform: translateX(-50%) translateY(10px) scale(var(--tooltip-scale));
+        transform: translateX(-50%) translateY(10px) scale(calc(1 / var(--map-scale)));
         transform-origin: bottom center;
         width: 320px; background: white; border-radius: 12px;
         box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-        opacity: 0; pointer-events: none; transition: all 0.2s ease;
+        opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
         overflow: hidden; display: flex; flex-direction: column;
         z-index: 1000; 
     }
 
     body.is-state-1 .mesa:hover .custom-tooltip-wrapper, body.is-state-1 .mesa:active .custom-tooltip-wrapper,
     body.is-state-2 .mesa:hover .custom-tooltip-wrapper, body.is-state-2 .mesa:active .custom-tooltip-wrapper { 
-        opacity: 1; transform: translateX(-50%) translateY(0) scale(var(--tooltip-scale)); pointer-events: auto;
+        opacity: 1; transform: translateX(-50%) translateY(0) scale(calc(1 / var(--map-scale))); pointer-events: auto;
     }
 
     .tooltip-row { display: flex; border-bottom: 1px solid #edf2f7; }
-    .tooltip-cell { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; align-items: center; }
+    .tooltip-cell { flex: 1; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; }
     .tooltip-cell:first-child { border-right: 1px solid #edf2f7; }
     .tooltip-label { color: var(--text-gray); font-size: 11px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
-    .tooltip-value { font-size: 18px; font-weight: 800; color: #1f2937; text-align: center;}
+    .tooltip-value { font-size: 20px; font-weight: 800; color: #1f2937; text-align: center;}
     
-    .tooltip-footer { padding: 12px; font-size: 14px; font-weight: 800; color: white; background: var(--verde-deep); text-align: center; }
+    .tooltip-footer { padding: 14px; font-size: 15px; font-weight: 800; color: white; background: var(--verde-deep); text-align: center; }
     .mesa.agotada .tooltip-footer { background: var(--rojo-sold); }
     .mesa.commercial .tooltip-footer { background: #3498db; }
+
+    /* --- MENÚ LATERAL (VOLVER) --- */
+    #side-menu {
+        position: fixed; right: -150px; top: 50%; transform: translateY(-50%);
+        transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 20000;
+        display: flex; flex-direction: column; gap: 10px;
+    }
+    #side-menu.visible { right: 20px; }
+
+    .btn-back {
+        background: white; border: none; padding: 15px 25px; border-radius: 50px;
+        font-family: var(--fuente); font-weight: 800; font-size: 14px; color: #1f2937;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15); cursor: pointer;
+        display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+    }
+    .btn-back:hover { transform: scale(1.05); background: #f8fafc; color: var(--rojo-sold); }
 
     /* --- SELECTOR RÁPIDO DE ZOOM (UI FLOTANTE) --- */
     #zoom-ui {
@@ -107,27 +121,23 @@
     .zoom-btn.active { background: #1f2937; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
 
     /* ========================================= */
-    /* LA LUPA MÁGICA */
+    /* LA LUPA MÁGICA V3 */
     /* ========================================= */
     #loupe {
         position: fixed; width: 260px; height: 260px; border-radius: 50%;
         border: 4px solid white; box-shadow: 0 15px 35px rgba(0,0,0,0.4), inset 0 0 15px rgba(0,0,0,0.2);
         pointer-events: none; overflow: hidden; z-index: 15000; 
         opacity: 0; display: none; background: #fff;
-        left: 0; top: 0; 
-        will-change: transform;
+        left: 0; top: 0; will-change: transform;
     }
     #loupe.visible { opacity: 1; display: block; }
-    
-    #loupe-inner { 
-        position: absolute; transform-origin: 0 0; pointer-events: none; 
-        will-change: transform;
-    }
+    #loupe-inner { position: absolute; transform-origin: 0 0; pointer-events: none; will-change: transform; }
     #loupe .custom-tooltip-wrapper { display: none !important; }
 
     @media(max-width: 768px) {
+        #side-menu { display: none; } 
         #zoom-ui { right: 50%; transform: translateX(50%); bottom: 25px; }
-        .custom-tooltip-wrapper { width: 260px; }
+        .custom-tooltip-wrapper { width: 300px; }
         #loupe { display: none !important; } 
     }
 </style>
@@ -145,6 +155,13 @@
         <div id="loupe-inner"></div>
     </div>
 
+    <div id="side-menu">
+        <button class="btn-back" onclick="setZoomStateUI(0, event)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            VOLVER
+        </button>
+    </div>
+
     <div id="zoom-ui">
         <button class="zoom-btn active" onclick="setZoomStateUI(0, event)">x1</button>
         <button class="zoom-btn" onclick="setZoomStateUI(1, event)">x2</button>
@@ -152,9 +169,6 @@
     </div>
 
 <script>
-    // ==========================================
-    // 1. CARGA DE DATOS (Con Precios Nuevos)
-    // ==========================================
     const diccionarioMesas = new Map();
     const URL_CSV = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSuA_zpd7Ays5Xt9MDPQzkzCbxj8s0SaDgQGhuxcthtMl59F3H9oWipgKfsUmbiDloop2b43rqoq8CG/pub?gid=0&single=true&output=csv';
 
@@ -198,7 +212,6 @@
             });
             
             await sincronizarConExcel();
-            // Clonar contenido para la lupa
             document.getElementById('loupe-inner').innerHTML = document.getElementById('container').innerHTML;
 
         } catch (e) { console.error("Error cargando mesas:", e); }
@@ -233,79 +246,108 @@
     }
 
     // ==========================================
-    // 2. MOTOR DE TRIPLE ZOOM & NAVEGACIÓN
+    // MOTOR DE TRIPLE ZOOM & NAVEGACIÓN V5
     // ==========================================
     const container = document.getElementById('container');
+    const mapImg = document.getElementById('map-img');
     
     let currentZoomState = 0; 
-    const ZOOM_LEVELS = [1, 2.5, 6.0];
-    let currentZoom = ZOOM_LEVELS[0];
+    let baseScale = 1; // La escala necesaria para que el mapa encaje en la pantalla
+    let currentZoom = 1;
     
-    let currentX = 0; 
-    let currentY = 0;
+    let currentX = 0, currentY = 0;
     let isDragging = false;
     let startX, startY, initialX, initialY;
 
+    // Calcular la escala base para que la imagen quepa perfectamente
     function initMapPosition() {
-        const wrapperHeight = window.innerHeight;
-        const mapHeight = container.offsetHeight;
-        if (mapHeight > 0 && mapHeight < wrapperHeight) {
-            currentY = (wrapperHeight - mapHeight) / 2;
-            container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom})`;
+        if(mapImg.naturalWidth === 0) {
+            setTimeout(initMapPosition, 100);
+            return;
         }
-    }
-    setTimeout(initMapPosition, 300);
+        
+        baseScale = window.innerWidth / mapImg.naturalWidth;
+        
+        // Evitamos que se vea microscópico en pantallas enormes
+        if (baseScale > 1) baseScale = 1;
 
-    function setZoomState(state, clickClientX = null, clickClientY = null) {
+        setZoomState(0, null, null, true); // true = sin animación de carga inicial
+    }
+
+    window.onload = () => {
+        if(mapImg.complete) initMapPosition();
+        else mapImg.onload = initMapPosition;
+        cargarMesas();
+    };
+
+    // Al redimensionar la ventana, recalculamos
+    window.addEventListener('resize', () => {
+        if(currentZoomState === 0) initMapPosition();
+    });
+
+    function setZoomState(state, clickClientX = null, clickClientY = null, instant = false) {
         currentZoomState = state;
         
-        let newZoom = ZOOM_LEVELS[state];
-        if (state === 1 && window.innerWidth < 768) newZoom = 4.5;
+        // Múltiplos de la escala base: x1, x2.5 y x6
+        let zoomMultiplier = 1;
+        if (state === 1) zoomMultiplier = window.innerWidth < 768 ? 4.5 : 2.5;
+        if (state === 2) zoomMultiplier = window.innerWidth < 768 ? 8.0 : 6.0;
 
-        // Comunicamos el zoom a CSS para que recalcule los bordes y no engorden
-        document.documentElement.style.setProperty('--map-zoom', newZoom);
+        let newScale = baseScale * zoomMultiplier;
 
+        // Comunicamos la escala a CSS para que los tooltips calculen su tamaño inverso
+        document.documentElement.style.setProperty('--map-scale', newScale);
+
+        // Actualizar UI Botones
         document.querySelectorAll('.zoom-btn').forEach((btn, idx) => {
             btn.classList.toggle('active', idx === state);
         });
         document.body.className = 'is-state-' + state;
 
+        container.style.transition = instant ? 'none' : 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+
         if (state === 0) {
-            // VOLVER A FULL
-            currentZoom = 1;
+            // VOLVER A FULL (Centrado vertical y pegado a la izquierda/arriba según ratio)
+            currentScale = baseScale;
             currentX = 0;
-            currentY = Math.max(0, (window.innerHeight - container.offsetHeight) / 2);
-            container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom})`;
+            currentY = Math.max(0, (window.innerHeight - (mapImg.naturalHeight * baseScale)) / 2);
+            container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
             
+            document.getElementById('side-menu').classList.remove('visible');
+            
+            // Limpiar tooltips colgados
             document.querySelectorAll('.custom-tooltip-wrapper').forEach(t => {
                 t.style.opacity = '0'; t.style.pointerEvents = 'none';
                 setTimeout(() => { t.style.opacity = ''; t.style.pointerEvents = ''; }, 300);
             });
         } else {
             // ZOOM X2 o X3
-            document.documentElement.style.setProperty('--tooltip-scale', 1 / newZoom);
+            document.getElementById('side-menu').classList.add('visible');
             
             if (clickClientX !== null && clickClientY !== null) {
-                const mapUnscaledX = (clickClientX - currentX) / currentZoom;
-                const mapUnscaledY = (clickClientY - currentY) / currentZoom;
+                // Matemática exacta de centrado
+                // Dónde hicimos click en el mapa original
+                const mapUnscaledX = (clickClientX - currentX) / currentScale;
+                const mapUnscaledY = (clickClientY - currentY) / currentScale;
 
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
 
-                currentX = centerX - (mapUnscaledX * newZoom);
-                currentY = centerY - (mapUnscaledY * newZoom);
+                currentX = centerX - (mapUnscaledX * newScale);
+                currentY = centerY - (mapUnscaledY * newScale);
             } else {
+                // Desde botón: mantenemos el centro
                 const centerX = window.innerWidth / 2;
                 const centerY = window.innerHeight / 2;
-                const mapUnscaledX = (centerX - currentX) / currentZoom;
-                const mapUnscaledY = (centerY - currentY) / currentZoom;
+                const mapUnscaledX = (centerX - currentX) / currentScale;
+                const mapUnscaledY = (centerY - currentY) / currentScale;
                 
-                currentX = centerX - (mapUnscaledX * newZoom);
-                currentY = centerY - (mapUnscaledY * newZoom);
+                currentX = centerX - (mapUnscaledX * newScale);
+                currentY = centerY - (mapUnscaledY * newScale);
             }
             
-            currentZoom = newZoom;
-            container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom})`;
+            currentScale = newScale;
+            container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
         }
     }
 
@@ -325,6 +367,7 @@
         setZoomState(state, null, null);
     };
 
+    // LÓGICA ARRASTRE
     function startDrag(clientX, clientY) {
         if (currentZoomState === 0) return; 
         isDragging = true;
@@ -339,7 +382,8 @@
         if (!isDragging) return;
         currentX = initialX + (clientX - startX);
         currentY = initialY + (clientY - startY);
-        container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentZoom})`;
+        // Translation is 1:1 with mouse movement because scale is applied AFTER translate in CSS
+        container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
     }
 
     function endDrag() {
@@ -361,15 +405,15 @@
     window.addEventListener('touchend', endDrag);
 
     // ==========================================
-    // 3. LA LUPA MÁGICA (Sólo en Nivel 0)
+    // LA LUPA MÁGICA (Sólo en Nivel 0)
     // ==========================================
     const loupe = document.getElementById('loupe');
     const loupeInner = document.getElementById('loupe-inner');
-    const loupeSize = 260; // Más recogida, como pediste
-    const loupeZoom = 1.6; // Amplía un poco menos para ver más contexto
+    const loupeSize = 260; 
+    const loupeMultiplier = 1.6; // 1.6 veces el tamaño base
     
     window.addEventListener('pointermove', (e) => {
-        // La lupa AHORA SOLO funciona si estamos en el nivel 0 (Vista General)
+        // Solo en nivel 0 y PC
         if (window.innerWidth < 768 || e.pointerType === 'touch' || currentZoomState > 0 || isDragging) {
             loupe.classList.remove('visible');
             return;
@@ -377,6 +421,7 @@
 
         const rect = container.getBoundingClientRect();
         
+        // Si sale del mapa, apagar
         if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
             loupe.classList.remove('visible');
             return;
@@ -385,19 +430,22 @@
         loupe.classList.add('visible');
         loupe.style.transform = `translate(${e.clientX - loupeSize / 2}px, ${e.clientY - loupeSize / 2}px)`;
 
-        loupeInner.style.width = container.offsetWidth + 'px';
-        loupeInner.style.height = container.offsetHeight + 'px';
+        // Forzar clon al tamaño natural
+        loupeInner.style.width = mapImg.naturalWidth + 'px';
+        loupeInner.style.height = mapImg.naturalHeight + 'px';
 
-        const mapUnscaledX = (e.clientX - currentX) / currentZoom;
-        const mapUnscaledY = (e.clientY - currentY) / currentZoom;
+        const targetZoom = baseScale * loupeMultiplier;
 
-        const tx = (loupeSize / 2) - (mapUnscaledX * loupeZoom);
-        const ty = (loupeSize / 2) - (mapUnscaledY * loupeZoom);
+        // Dónde está el ratón en la imagen original
+        const mapUnscaledX = (e.clientX - currentX) / baseScale;
+        const mapUnscaledY = (e.clientY - currentY) / baseScale;
 
-        loupeInner.style.transform = `translate(${tx}px, ${ty}px) scale(${loupeZoom})`;
+        const tx = (loupeSize / 2) - (mapUnscaledX * targetZoom);
+        const ty = (loupeSize / 2) - (mapUnscaledY * targetZoom);
+
+        loupeInner.style.transform = `translate(${tx}px, ${ty}px) scale(${targetZoom})`;
     });
 
-    window.onload = cargarMesas;
     setInterval(sincronizarConExcel, 120000); 
 
 </script>
