@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HALL 2 V2 - Puzzle Builder Pro</title>
+    <title>HALL 2 - Precision Builder</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -45,26 +45,33 @@
 
     /* PALETA IZQUIERDA */
     #palette {
-        position: fixed; top: 10px; left: 10px; width: 280px; bottom: 10px;
-        background: var(--panel-bg); padding: 15px; border-radius: 8px;
+        position: fixed; top: 10px; left: 10px; width: 300px; 
+        background: var(--panel-bg); padding: 20px; border-radius: 8px;
         box-shadow: 5px 0 30px rgba(0,0,0,0.3); z-index: 20000;
-        display: flex; flex-direction: column;
+        display: flex; flex-direction: column; gap: 15px;
     }
     
-    #palette h3 { margin: 0 0 15px 0; font-size: 14px; color: #333; text-transform: uppercase; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+    #palette h3 { margin: 0; font-size: 16px; color: #333; text-transform: uppercase; border-bottom: 2px solid #eee; padding-bottom: 10px; }
     
-    .scroll-area { flex: 1; overflow-y: auto; padding-right: 5px; }
-    
-    .btn-magic {
-        width: 100%; padding: 12px; background: #8e44ad; color: white;
-        border: none; border-radius: 6px; font-weight: bold; cursor: pointer;
-        margin-bottom: 15px; text-transform: uppercase; font-size: 12px;
-        box-shadow: 0 4px 10px rgba(142, 68, 173, 0.3); transition: all 0.2s;
+    .btn-create {
+        width: 100%; padding: 15px; background: #3b82f6; color: white;
+        border: none; border-radius: 6px; font-weight: 800; cursor: pointer;
+        font-size: 14px; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); transition: all 0.2s;
     }
-    .btn-magic:hover { background: #9b59b6; transform: translateY(-2px); }
+    .btn-create:hover { background: #2563eb; transform: translateY(-2px); }
 
-    .section-list { font-size: 11px; font-weight: bold; color: #555; line-height: 1.6; }
-    .section-list span { color: #8e44ad; }
+    /* SINTONIZADOR DE TAMAÑOS */
+    .tuner-box {
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px;
+    }
+    .tuner-title { font-size: 12px; font-weight: 800; color: #475569; margin-bottom: 10px; display: flex; justify-content: space-between;}
+    .tuner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .tuner-col { display: flex; flex-direction: column; gap: 5px; }
+    .tuner-col label { font-size: 10px; font-weight: bold; color: #64748b; }
+    .tuner-col input { 
+        width: 100%; padding: 6px; border: 1px solid #cbd5e1; border-radius: 4px; 
+        font-family: monospace; font-size: 12px; box-sizing: border-box;
+    }
 
     /* PROPIEDADES FLOTANTE */
     #prop-float {
@@ -81,52 +88,56 @@
     .btn-del { background: var(--rojo-del); color: white; }
 
     #export-bar {
-        position: fixed; bottom: 20px; left: 310px; right: 20px;
+        position: fixed; bottom: 20px; left: 330px; right: 20px;
         pointer-events: none; display: flex; justify-content: center; z-index: 20000;
     }
     .btn-exp { pointer-events: auto; background: #2d3436; color: #00d2d3; border: 2px solid #00d2d3; padding: 12px 30px; border-radius: 50px; font-weight: 800; cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.4); transition: transform 0.2s; }
     .btn-exp:hover { transform: translateY(-3px) scale(1.05); background: #00d2d3; color: white; }
 
     #clipboard-area { position: absolute; left: -9999px; }
+    .shortcuts { font-size: 11px; color: #64748b; line-height: 1.6; background: #f1f5f9; padding: 10px; border-radius: 6px;}
 </style>
 </head>
 <body>
 
     <div id="palette">
-        <h3>🧩 Builder V2</h3>
+        <h3>📐 Precision Builder</h3>
         
-        <button class="btn-magic" onclick="generarPuzzleMasivo()">✨ Generar Puzzle (474)</button>
+        <button class="btn-create" onclick="crearPieza()">➕ CREAR PIEZA</button>
 
-        <div class="scroll-area">
-            <div style="margin-bottom: 10px; font-size: 12px; font-weight: 800; color: #333;">Distribución cargada:</div>
-            <div class="section-list">
-                MANGA A (Col): <span>26 mesas</span><br>
-                MANGA B (Col): <span>26 mesas</span><br>
-                DIECAST A (Col): <span>26 mesas</span><br>
-                DIECAST B (Col): <span>26 mesas</span><br>
-                RETRO/FASHION: <span>36 mesas</span><br>
-                DIECAST C (Col): <span>36 mesas</span><br>
-                DIECAST D (Col): <span>36 mesas</span><br>
-                DIECAST E (Col): <span>32 mesas</span><br>
-                DIECAST F (Col): <span>32 mesas</span><br>
-                DIECAST G (Com): <span>36 mesas</span><br>
-                DIECAST H (Com): <span>36 mesas</span><br>
-                FIGURES A (Col): <span>32 mesas</span><br>
-                FIGURES B (Col): <span>32 mesas</span><br>
-                FIGURES C (Com): <span>32 mesas</span><br>
-                FIGURES D (Com): <span>36 mesas</span>
+        <div class="tuner-box">
+            <div class="tuner-title">
+                <span>AJUSTE DE TAMAÑO (%)</span>
             </div>
+            
+            <div class="tuner-grid">
+                <div class="tuner-col">
+                    <label>HORIZ. Ancho (W)</label>
+                    <input type="number" step="0.01" id="hw" value="1.17" oninput="updateAllSizes()">
+                    <label>HORIZ. Alto (H)</label>
+                    <input type="number" step="0.01" id="hh" value="0.41" oninput="updateAllSizes()">
+                </div>
+                <div class="tuner-col">
+                    <label>VERT. Ancho (W)</label>
+                    <input type="number" step="0.01" id="vw" value="0.34" oninput="updateAllSizes()">
+                    <label>VERT. Alto (H)</label>
+                    <input type="number" step="0.01" id="vh" value="1.38" oninput="updateAllSizes()">
+                </div>
+            </div>
+            <div style="font-size: 10px; color: #94a3b8; text-align: center; margin-top: 5px;">Los cambios se aplican en tiempo real.</div>
         </div>
-        <div style="font-size:11px; color:#999; margin-top:10px; text-align:center; border-top:1px solid #eee; padding-top:10px; line-height: 1.5;">
-            'R' -> <b>GIRAR MESA</b><br>
-            'D' -> <b>DUPLICAR (+1)</b><br>
-            'Supr' -> <b>BORRAR</b><br>
-            Flechas -> <b>MOVER PÍXEL</b>
+
+        <div class="shortcuts">
+            <b>ATAJOS DE TECLADO:</b><br>
+            • <b>R</b>: Girar Mesa<br>
+            • <b>D</b>: Duplicar (Suma +1 al ID)<br>
+            • <b>Supr</b>: Borrar mesa<br>
+            • <b>Flechas</b>: Mover al milímetro
         </div>
     </div>
 
     <div id="prop-float">
-        <label style="font-size:10px; font-weight:bold; color:#999;">ID MESA</label>
+        <label style="font-size:10px; font-weight:bold; color:#999;">ID MESA (Click para editar)</label>
         <input type="text" id="inp-id" style="width:100%; padding:8px; border:2px solid #ddd; border-radius:4px; font-weight:bold; font-family:monospace; margin-bottom:10px; box-sizing: border-box;">
         
         <button class="btn-action btn-rot" onclick="rotateSelected()">🔄 GIRAR (R)</button>
@@ -135,7 +146,7 @@
     </div>
 
     <div id="export-bar">
-        <button class="btn-exp" onclick="exportHTML()">💾 EXPORTAR HTML FINAL</button>
+        <button class="btn-exp" onclick="exportHTML()">💾 EXPORTAR HTML</button>
     </div>
 
     <div id="viewport">
@@ -148,28 +159,9 @@
     <textarea id="clipboard-area"></textarea>
 
 <script>
-    // --- TAMAÑOS EXACTOS (NUEVOS) ---
-    const SIZE_H = { w: 1.17, h: 0.41 }; // Horizontal
-    const SIZE_V = { w: 0.34, h: 1.38 }; // Vertical
-
-    // --- NUEVA DISTRIBUCIÓN V2 ---
-    const SECCIONES = [
-        { idPrefix: 'MANGACOM-A', count: 26 },
-        { idPrefix: 'MANGACOM-B', count: 26 },
-        { idPrefix: 'DIECAST-A', count: 26 },
-        { idPrefix: 'DIECAST-B', count: 26 },
-        { idPrefix: 'RETRO', count: 36 }, // Sin letra comercial/collector
-        { idPrefix: 'DIECAST-C', count: 36 },
-        { idPrefix: 'DIECAST-D', count: 36 },
-        { idPrefix: 'DIECAST-E', count: 32 },
-        { idPrefix: 'DIECAST-F', count: 32 },
-        { idPrefix: 'DIECAST-G', count: 36 },
-        { idPrefix: 'DIECAST-H', count: 36 },
-        { idPrefix: 'FIGURES-A', count: 32 },
-        { idPrefix: 'FIGURES-B', count: 32 },
-        { idPrefix: 'FIGURES-C', count: 32 },
-        { idPrefix: 'FIGURES-D', count: 36 }
-    ];
+    // --- VARIABLES GLOBALES DE TAMAÑO ---
+    let SIZE_H = { w: 1.17, h: 0.41 }; 
+    let SIZE_V = { w: 0.34, h: 1.38 }; 
 
     let scale = 0.2;
     const container = document.getElementById('container');
@@ -191,43 +183,83 @@
     async function init() {
         fit();
         viewport.addEventListener('wheel', handleWheel, { passive: false });
+        
+        // Sincronizar inputs visuales con variables iniciales
+        document.getElementById('hw').value = SIZE_H.w;
+        document.getElementById('hh').value = SIZE_H.h;
+        document.getElementById('vw').value = SIZE_V.w;
+        document.getElementById('vh').value = SIZE_V.h;
     }
 
-    // --- BOTÓN MÁGICO: GENERAR LAS 474 MESAS ---
-    window.generarPuzzleMasivo = function() {
-        if(document.querySelectorAll('.mesa').length > 0) {
-            if(!confirm("Ya hay mesas en el tablero. ¿Quieres volver a generar todo? (Se ignorarán las que ya existan con el mismo ID)")) return;
-        }
-        
-        let startTop = 2; // Empezamos cerca del margen superior
-        
-        SECCIONES.forEach(sec => {
-            let startLeft = 2; // Empezamos en el margen izquierdo
-            
-            for(let i=1; i<=sec.count; i++) {
-                const idName = `${sec.idPrefix}-${i}`;
-                
-                // Comprobar si ya existe para no duplicar
-                if(document.querySelector(`[data-info="${idName}"]`)) continue;
+    // --- ACTUALIZADOR DE TAMAÑOS EN TIEMPO REAL ---
+    window.updateAllSizes = function() {
+        SIZE_H.w = parseFloat(document.getElementById('hw').value) || 1.17;
+        SIZE_H.h = parseFloat(document.getElementById('hh').value) || 0.41;
+        SIZE_V.w = parseFloat(document.getElementById('vw').value) || 0.34;
+        SIZE_V.h = parseFloat(document.getElementById('vh').value) || 1.38;
 
-                const div = document.createElement('div');
-                div.className = 'mesa';
-                div.setAttribute('data-info', idName);
-                
-                div.style.width = SIZE_H.w + '%';
-                div.style.height = SIZE_H.h + '%';
-                div.style.top = startTop.toFixed(2) + '%';
-                div.style.left = startLeft.toFixed(2) + '%';
-                
-                capaMesas.appendChild(div);
-                addInteractions(div);
-                
-                startLeft += (SIZE_H.w + 0.15); // Separación horizontal entre mesas
+        document.querySelectorAll('.mesa').forEach(m => {
+            const w = parseFloat(m.style.width);
+            const h = parseFloat(m.style.height);
+            const isHorizontal = w > h; // Lógica simple: Si es más ancha que alta, es H.
+
+            if (isHorizontal) {
+                m.style.width = SIZE_H.w + '%';
+                m.style.height = SIZE_H.h + '%';
+            } else {
+                m.style.width = SIZE_V.w + '%';
+                m.style.height = SIZE_V.h + '%';
             }
-            startTop += (SIZE_H.h + 0.8); // Separación vertical de fila para la siguiente letra
         });
+    }
 
-        alert("¡Puzzle generado! Las 474 piezas están arriba a la izquierda.");
+    // --- CREAR UNA PIEZA INDIVIDUAL ---
+    window.crearPieza = function() {
+        let defaultId = "DIECAST-A-1";
+        
+        // Si hay una seleccionada, sugerir el siguiente número
+        if (selectedElement) {
+            let lastId = selectedElement.getAttribute('data-info');
+            let parts = lastId.split('-');
+            if(!isNaN(parts[parts.length-1])) {
+                parts[parts.length-1] = parseInt(parts[parts.length-1]) + 1;
+                defaultId = parts.join('-');
+            }
+        }
+
+        let idStr = prompt("Introduce el ID de la nueva mesa (Ej: DIECAST-A-1, MANGACOM-B-12):", defaultId);
+        
+        if (!idStr) return; // Cancelado
+        idStr = idStr.trim().toUpperCase().replace(/\s+/g, '-');
+
+        if(document.querySelector(`[data-info="${idStr}"]`)) {
+            alert(`⚠️ La mesa ${idStr} ya existe en el mapa.`);
+            return;
+        }
+
+        spawnTable(idStr);
+    }
+
+    function spawnTable(idName) {
+        const div = document.createElement('div');
+        div.className = 'mesa';
+        div.setAttribute('data-info', idName);
+        
+        const rect = viewport.getBoundingClientRect();
+        const centerX = (rect.width / 2 - container.getBoundingClientRect().left) / scale;
+        const centerY = (rect.height / 2 - container.getBoundingClientRect().top) / scale;
+
+        const leftP = (centerX / mapImg.naturalWidth) * 100;
+        const topP = (centerY / mapImg.naturalHeight) * 100;
+
+        div.style.width = SIZE_H.w + '%';
+        div.style.height = SIZE_H.h + '%';
+        div.style.top = topP.toFixed(2) + '%';
+        div.style.left = leftP.toFixed(2) + '%';
+
+        capaMesas.appendChild(div);
+        addInteractions(div);
+        selectMesa(div);
     }
 
     // --- INTERACCIONES ---
@@ -282,7 +314,8 @@
     window.rotateSelected = function() {
         if(!selectedElement) return;
         const currentW = parseFloat(selectedElement.style.width);
-        const isHorizontal = currentW > 1.0; 
+        const currentH = parseFloat(selectedElement.style.height);
+        const isHorizontal = currentW > currentH; 
         
         if (isHorizontal) {
             selectedElement.style.width = SIZE_V.w + '%';
@@ -297,23 +330,31 @@
     window.duplicateSelected = function() {
         if(!selectedElement) return;
         const clone = selectedElement.cloneNode(true);
-        const oldId = selectedElement.getAttribute('data-info');
+        let oldId = selectedElement.getAttribute('data-info');
         
         const parts = oldId.split('-');
         if(!isNaN(parts[parts.length-1])) {
             parts[parts.length-1] = parseInt(parts[parts.length-1]) + 1;
-            clone.setAttribute('data-info', parts.join('-'));
+            oldId = parts.join('-');
         }
+        
+        // Bucle por si la mesa sugerida ya existe
+        while(document.querySelector(`[data-info="${oldId}"]`)) {
+             let p = oldId.split('-');
+             p[p.length-1] = parseInt(p[p.length-1]) + 1;
+             oldId = p.join('-');
+        }
+        clone.setAttribute('data-info', oldId);
 
         const currentW = parseFloat(selectedElement.style.width);
         const currentH = parseFloat(selectedElement.style.height);
-        const isHorizontal = currentW > 1.0;
+        const isHorizontal = currentW > currentH;
 
         let top = parseFloat(selectedElement.style.top);
         let left = parseFloat(selectedElement.style.left);
 
-        if (isHorizontal) left += (currentW - 0.05); 
-        else top += (currentH - 0.05);
+        if (isHorizontal) left += (SIZE_H.w + 0.05); 
+        else top += (SIZE_V.h + 0.05);
 
         clone.style.top = top.toFixed(4) + '%';
         clone.style.left = left.toFixed(4) + '%';
@@ -356,14 +397,12 @@
 
     // --- ZOOM ---
     function handleWheel(e) {
-        if(true) {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? 0.9 : 1.1;
-            let newScale = scale * delta;
-            if(newScale > 0.05 && newScale < 15) {
-                scale = newScale;
-                container.style.transform = `scale(${scale})`;
-            }
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        let newScale = scale * delta;
+        if(newScale > 0.05 && newScale < 15) {
+            scale = newScale;
+            container.style.transform = `scale(${scale})`;
         }
     }
 
@@ -384,7 +423,7 @@
         area.value = html;
         area.select();
         document.execCommand('copy');
-        alert("¡Puzzle Copiado! 🧩 (" + mesas.length + " mesas).\n\nPégalo en tu archivo mesas.html");
+        alert("¡Bloques Copiados! 🧩 (" + mesas.length + " mesas).\n\nGuarda esto a buen recaudo.");
     }
 
     function fit() {
