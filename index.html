@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HALL 2 - Magnifier Map Pro</title>
+    <title>HALL 2 - Precision Magnifier Map Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -34,33 +34,31 @@
 
     #map-img { width: 100%; height: auto; display: block; user-select: none; -webkit-user-drag: none; }
 
-    .is-zoomed #container { cursor: grab; }
-    .is-zoomed #container:active { cursor: grabbing; }
+    /* ESTADOS DE CURSOR Y COMPORTAMIENTO SEGÚN ZOOM */
+    /* En Nivel 1 y 2, permitimos arrastrar (pan) */
+    body.is-state-1 #container, body.is-state-2 #container { cursor: grab; }
+    body.is-state-1 #container:active, body.is-state-2 #container:active { cursor: grabbing; }
 
     /* --- MESAS (Estilos afinados) --- */
     .mesa { 
-        position: absolute; 
-        border: 1px solid var(--verde-base); /* Borde más fino para mesas pequeñas */
-        background: rgba(46, 204, 113, 0.25); 
-        box-sizing: border-box; 
-        border-radius: 1px; /* Radio casi nulo para que sea rectangular */
-        pointer-events: none; 
+        position: absolute; border: 1px solid var(--verde-base); 
+        background: rgba(46, 204, 113, 0.25); box-sizing: border-box; 
+        border-radius: 1px; pointer-events: none; 
     }
     
-    .is-zoomed .mesa { pointer-events: auto; cursor: pointer; }
+    /* Activar interacciones SÓLO en Nivel 1 y 2 */
+    body.is-state-1 .mesa, body.is-state-2 .mesa { pointer-events: auto; cursor: pointer; }
     
     .mesa.commercial { border-color: #3498db; background: rgba(52, 152, 219, 0.25); }
     .mesa.agotada { background: rgba(231, 76, 60, 0.4) !important; border-color: var(--rojo-sold) !important; cursor: not-allowed; }
 
-    /* Al hacer hover con zoom */
-    .is-zoomed .mesa:hover, .is-zoomed .mesa:active { 
-        z-index: 999; 
-        border-color: white; 
-        border-width: 1.5px;
-        box-shadow: 0 0 8px rgba(0,0,0,0.3); 
-        background: rgba(46, 204, 113, 0.6);
+    /* Hovers en PC */
+    body.is-state-1 .mesa:hover, body.is-state-1 .mesa:active,
+    body.is-state-2 .mesa:hover, body.is-state-2 .mesa:active { 
+        z-index: 999; border-color: white; border-width: 1.5px;
+        box-shadow: 0 0 8px rgba(0,0,0,0.3); background: rgba(46, 204, 113, 0.6);
     }
-    .is-zoomed .mesa.commercial:hover { background: rgba(52, 152, 219, 0.6); }
+    body.is-state-1 .mesa.commercial:hover, body.is-state-2 .mesa.commercial:hover { background: rgba(52, 152, 219, 0.6); }
 
     /* --- TOOLTIPS --- */
     .custom-tooltip-wrapper {
@@ -74,8 +72,8 @@
         z-index: 1000; 
     }
 
-    .is-zoomed .mesa:hover .custom-tooltip-wrapper,
-    .is-zoomed .mesa:active .custom-tooltip-wrapper { 
+    body.is-state-1 .mesa:hover .custom-tooltip-wrapper, body.is-state-1 .mesa:active .custom-tooltip-wrapper,
+    body.is-state-2 .mesa:hover .custom-tooltip-wrapper, body.is-state-2 .mesa:active .custom-tooltip-wrapper { 
         opacity: 1; transform: translateX(-50%) translateY(0) scale(var(--tooltip-scale)); pointer-events: auto;
     }
 
@@ -106,11 +104,11 @@
     .btn-back:hover { transform: scale(1.05); background: #f8fafc; color: var(--rojo-sold); }
 
     /* ========================================= */
-    /* LA LUPA MÁGICA (MAGNIFIER)                */
+    /* LA LUPA MÁGICA DE GRAN ANGULAR V2 (Más grande, menos zoom) */
     /* ========================================= */
     #loupe {
         position: fixed;
-        width: 250px; height: 250px;
+        width: 350px; height: 350px; /* V2: Diámetro aumentado de 250 a 350 */
         border-radius: 50%;
         border: 4px solid white;
         box-shadow: 0 15px 35px rgba(0,0,0,0.4), inset 0 0 15px rgba(0,0,0,0.2);
@@ -118,9 +116,10 @@
         overflow: hidden;
         z-index: 15000; 
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: opacity 0.2s, width 0.3s, height 0.3s;
         background: #fff;
         display: none;
+        will-change: left, top; /* Optimización movimiento lupa */
     }
     #loupe.visible { opacity: 1; display: block; }
     
@@ -128,19 +127,18 @@
         position: absolute;
         transform-origin: 0 0;
         pointer-events: none;
+        will-change: transform;
     }
-    #loupe .custom-tooltip-wrapper { display: none !important; }
+    #loupe .custom-tooltip-wrapper { display: none !important; } /* Ocultar tooltips dentro lupa */
 
     @media(max-width: 768px) {
         #side-menu.visible { right: 50%; transform: translate(50%, 0); top: auto; bottom: 30px; }
         .custom-tooltip-wrapper { width: 260px; }
-        #loupe { display: none !important; } 
+        #loupe { display: none !important; } /* Lupa desactivada móvil */
     }
 </style>
 </head>
-<body>
-
-    <div id="map-wrapper">
+<body class="is-state-0"> <div id="map-wrapper">
         <div id="container">
             <img id="map-img" src="Hall 2.png" alt="Map Hall 2">
             <div id="capa-mesas"></div> 
@@ -182,7 +180,6 @@
                 else if (info.includes("RETRO")) { displaySection = "Retro & Fashion"; tableNum = parts[1]; }
                 else displaySection = "Diecast - Zone " + parts[1];
 
-                // PRECIOS ACTUALIZADOS
                 let type = "Collector Table";
                 let price = "100,00 €";
 
@@ -239,83 +236,138 @@
     }
 
     // ==========================================
-    // LA LUPA MÁGICA (MAGNIFIER LOGIC)
+    // LA LUPA MÁGICA DE GRAN ANGULAR LOGIC
     // ==========================================
     const loupe = document.getElementById('loupe');
     const loupeInner = document.getElementById('loupe-inner');
-    const loupeSize = 250; 
-    const loupeZoom = 3; 
+    const loupeSize = 350; // V2: Aumentado
+    const loupeZoom = 1.8; // V2: Reducido para mayor amplitud y nitidez
 
     function syncLoupeContent() {
         loupeInner.innerHTML = document.getElementById('container').innerHTML;
     }
 
+    // EVENTO MOVIMIENTO RATÓN (SÓLO PC Y NO MEGA-ZOOM)
     window.addEventListener('pointermove', (e) => {
-        if (isZoomed || window.innerWidth < 768 || e.pointerType === 'touch') {
+        // Desactivar lupa si: es móvil, estamos mega-zoomeados (Nivel 2), o estamos arrastrando
+        if (window.innerWidth < 768 || e.pointerType === 'touch' || currentZoomState === 2 || isDragging) {
             loupe.classList.remove('visible');
             return;
         }
 
-        const rect = container.getBoundingClientRect();
+        const rectMainWrapper = document.getElementById('map-wrapper').getBoundingClientRect();
+        const mapImgRect = document.getElementById('map-img').getBoundingClientRect(); // visible transformed rect
         
-        if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
+        // Si el ratón sale del recuadro visible de la imagen del mapa, ocultar
+        if (e.clientX < mapImgRect.left || e.clientX > mapImgRect.right || e.clientY < mapImgRect.top || e.clientY > mapImgRect.bottom) {
             loupe.classList.remove('visible');
             return;
         }
 
         loupe.classList.add('visible');
-        loupe.style.left = (e.clientX - loupeSize / 2) + 'px';
-        loupe.style.top = (e.clientY - loupeSize / 2) + 'px';
 
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        // Posicionar el círculo de la lupa centrado en el cursor (con corrección de scroll)
+        const mouseXInWrapper = e.clientX - rectMainWrapper.left;
+        const mouseYInWrapper = e.clientY - rectMainWrapper.top;
 
-        loupeInner.style.width = rect.width + 'px';
-        loupeInner.style.height = rect.height + 'px';
+        // Usamos translates simples para posicionar la lupa para mejor rendimiento
+        loupe.style.transform = `translate(${mouseXInWrapper - loupeSize/2}px, ${mouseYInWrapper - loupeSize/2}px)`;
+        
+        // IMPORTANTE: Resetear left/top que usábamos antes si cambiamos a transform
+        loupe.style.left = '0px'; loupe.style.top = '0px';
 
-        const tx = (loupeSize / 2) - (x * loupeZoom);
-        const ty = (loupeSize / 2) - (y * loupeZoom);
+        // MATEMÁTICAS LUPA (Independiente del zoom actual del mapa)
+        
+        // 1. Obtener coordenadas del ratón RELATIVAS a la imagen del mapa visible actual (pannada/zoomeada)
+        const relX = e.clientX - mapImgRect.left;
+        const relY = e.clientY - mapImgRect.top;
 
-        loupeInner.style.transform = `translate(${tx}px, ${ty}px) scale(${loupeZoom})`;
+        // 2. Convertir esas coordenadas visibles a coordenadas naturales de la imagen original (0..5000px, etc)
+        // Natural = Relativa / DimensionVisible * DimensionNatural
+        const naturalX = (relX / mapImgRect.width) * mapImg.naturalWidth;
+        const naturalY = (relY / mapImgRect.height) * mapImg.naturalHeight;
+        
+        // 3. Transformar contenido lupa interna:
+        // Primero forzar tamaño natural, luego centrar contenido en lupa(350/2) y aplicar aumento.
+        loupeInner.style.width = mapImg.naturalWidth + 'px';
+        loupeInner.style.height = mapImg.naturalHeight + 'px';
+
+        const loupeCenterX = loupeSize / 2;
+        const loupeCenterY = loupeSize / 2;
+
+        // Matemática: Centrar -> Escalar -> Trasladar punto natural al centro
+        loupeInner.style.transform = `translate(${loupeCenterX}px, ${loupeCenterY}px) scale(${loupeZoom}) translate(${-naturalX}px, ${-naturalY}px)`;
     });
 
+
     // ==========================================
-    // MOTOR DE ZOOM Y PAN (ARRASTRAR)
+    // MOTOR DE ZOOM DE TRIPLE NIVEL Y PAN (ARRASTRAR)
     // ==========================================
     const container = document.getElementById('container');
     const sideMenu = document.getElementById('side-menu');
-    let isZoomed = false;
+    let isZoomed = false; // Se mantiene por compatibilidad grab, pero usamos State
+    let currentZoomState = 0; // 0=full, 1=zoom1, 2=megaZoom2
     let currentZoom = 1;
     let isDragging = false;
     let startX, startY, currentX = 0, currentY = 0;
 
+    // GESTIÓN CLICKS PARA TRIPLE NIVEL ZOOM
     container.addEventListener('click', (e) => {
-        if (isZoomed || isDragging) return; 
+        if (isDragging) return; // ignore si fue fin de arrastre
 
-        loupe.classList.remove('visible');
+        const rectVisMapa = container.getBoundingClientRect(); // Visible transformed rect
 
-        const rect = container.getBoundingClientRect();
-        const xP = ((e.clientX - rect.left) / rect.width) * 100;
-        const yP = ((e.clientY - rect.top) / rect.height) * 100;
+        // Coordenadas visible donde se hizo click RELATIVAS al contenedor pannado
+        // Esto funciona bien incluso pannado porque Origin setting re-centra visible part.
+        const xP_vis = ((e.clientX - rectVisMapa.left) / rectVisMapa.width) * 100;
+        const yP_vis = ((e.clientY - rectVisMapa.top) / rectVisMapa.height) * 100;
 
-        container.style.transformOrigin = `${xP}% ${yP}%`;
-        
-        currentZoom = window.innerWidth < 768 ? 4.5 : 2.5;
-        document.documentElement.style.setProperty('--tooltip-scale', 1 / currentZoom);
+        loupe.classList.remove('visible'); // Ocultar lupa al pulsar
 
-        container.style.transform = `scale(${currentZoom}) translate(0px, 0px)`;
-        
-        document.body.classList.add('is-zoomed');
-        sideMenu.classList.add('visible');
-        isZoomed = true;
-        currentX = 0; currentY = 0;
+        if (currentZoomState === 0) {
+            // FULL -> ACERCAMIENTO PASILLO (Nivel 1)
+            currentZoom = window.innerWidth < 768 ? 4.5 : 2.5; // Móvil necesita más
+            
+            // Re-centrar visible part on click point
+            container.style.transformOrigin = `${xP_vis}% ${yP_vis}%`;
+            container.style.transform = `scale(${currentZoom}) translate(0px, 0px)`;
+            
+            // Tooltip scale fix
+            document.documentElement.style.setProperty('--tooltip-scale', 1 / currentZoom);
+            
+            document.body.className = 'is-state-1';
+            currentZoomState = 1;
+            sideMenu.classList.add('visible');
+            currentX = 0; currentY = 0; // Reset pans
+
+        } else if (currentZoomState === 1) {
+            // PASILLO -> MEGA ZOOM PRECISIÓN (Nivel 2)
+            currentZoom = 6.0; // Aumento masivo definitivo
+            
+            // Re-centrar visible part de nuevo on new click point
+            container.style.transformOrigin = `${xP_vis}% ${yP_vis}%`;
+            container.style.transform = `scale(${currentZoom}) translate(0px, 0px)`;
+            
+            // Tooltip scale fix definitivo
+            document.documentElement.style.setProperty('--tooltip-scale', 1 / currentZoom);
+            
+            document.body.className = 'is-state-2';
+            currentZoomState = 2;
+            currentX = 0; currentY = 0; // Reset pans
+
+        } else if (currentZoomState === 2) {
+            // MEGA ZOOM -> RESETEAR A FULL (Bucle)
+            resetZoom();
+        }
     });
 
+    // BOTÓN VOLVER (Siempre resetea a 0)
     window.resetZoom = function() {
         container.style.transform = `scale(1) translate(0px, 0px)`;
-        document.body.classList.remove('is-zoomed');
+        container.style.transformOrigin = `center center`;
+        document.body.className = 'is-state-0';
         sideMenu.classList.remove('visible');
-        isZoomed = false;
+        currentZoomState = 0; currentZoom = 1;
         
         document.querySelectorAll('.custom-tooltip-wrapper').forEach(t => {
             t.style.opacity = '0'; t.style.pointerEvents = 'none';
@@ -323,8 +375,9 @@
         });
     };
 
+    // LÓGICA ARRASTRE (PANNABLE) - SÓLO ACTIVA EN STATE 1 Y 2
     function startDrag(clientX, clientY) {
-        if (!isZoomed) return;
+        if (currentZoomState === 0) return; // No arrastrar si mapa completo
         isDragging = true;
         startX = clientX - currentX;
         startY = clientY - currentY;
@@ -335,6 +388,7 @@
         if (!isDragging) return;
         currentX = clientX - startX;
         currentY = clientY - startY;
+        // Dividimos traslación por zoom actual para que el mapa siga al puntero exactamente
         container.style.transform = `scale(${currentZoom}) translate(${currentX / currentZoom}px, ${currentY / currentZoom}px)`;
     }
 
@@ -344,17 +398,22 @@
         container.style.transition = 'transform 0.4s cubic-bezier(0.22, 1, 0.36, 1)'; 
     }
 
+    // Eventos Ratón
     container.addEventListener('mousedown', (e) => startDrag(e.clientX, e.clientY));
     window.addEventListener('mousemove', (e) => doDrag(e.clientX, e.clientY));
     window.addEventListener('mouseup', endDrag);
 
+    // Eventos Táctiles (Móviles - Solo Zoom Directo, sin arrastre pasillo por simplificar bugs)
     container.addEventListener('touchstart', (e) => startDrag(e.touches[0].clientX, e.touches[0].clientY));
     window.addEventListener('touchmove', (e) => {
-        if (isZoomed) e.preventDefault(); 
+        if (currentZoomState > 0) e.preventDefault(); // Evitar scroll web si zoomeado
         doDrag(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: false });
     window.addEventListener('touchend', endDrag);
 
+    // ==========================================
+    // INICIALIZACIÓN
+    // ==========================================
     window.onload = cargarMesas;
     setInterval(sincronizarConExcel, 120000); 
 
