@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HALL 2 - Ultimate Precision Map V8</title>
+    <title>HALL 2 - Ultimate Precision Map V9</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -64,7 +64,7 @@
         position: absolute; bottom: 150%; left: 50%;
         transform: translateX(-50%) translateY(10px) scale(calc(1 / var(--map-scale)));
         transform-origin: bottom center;
-        width: 360px; /* Un pelín más ancho para asegurar que caben los nombres largos */
+        width: 360px; 
         background: white; border-radius: 12px;
         box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
@@ -90,12 +90,9 @@
 
     /* --- MENÚ LATERAL (BACK) --- */
     #side-menu {
-        position: fixed; 
-        right: -150px; 
-        bottom: 100px;  /* MÁS ARRIBA: Cambiado de 85px a 100px para que respire mejor */
+        position: fixed; right: -150px; bottom: 100px; 
         transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        z-index: 20000;
-        display: flex; flex-direction: column; gap: 10px;
+        z-index: 20000; display: flex; flex-direction: column; gap: 10px;
     }
     #side-menu.visible { right: 30px; } 
 
@@ -105,13 +102,9 @@
         box-shadow: 0 10px 25px rgba(0,0,0,0.15); cursor: pointer;
         display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
     }
-    .btn-back:hover { 
-        transform: scale(1.05); 
-        background: #f8fafc; 
-        color: var(--verde-deep); /* HOVER ARREGLADO: Ahora es verde en lugar de rojo */
-    }
+    .btn-back:hover { transform: scale(1.05); background: #f8fafc; color: var(--verde-deep); }
 
-    /* --- SELECTOR RÁPIDO DE ZOOM (UI FLOTANTE) --- */
+    /* --- SELECTOR RÁPIDO DE ZOOM --- */
     #zoom-ui {
         position: fixed; bottom: 30px; right: 30px;
         background: white; padding: 6px; border-radius: 50px;
@@ -197,7 +190,6 @@
                 let zoneName = parts.length >= 2 ? parts[1] : "-";
                 let tableNum = parts.length >= 3 ? parts[2] : (parts[1] || "0"); 
 
-                // NOMBRES COMPLETOS AÑADIDOS AQUÍ
                 if (info.includes("MANGACOM")) {
                     catName = "Manga & Comics";
                 } else if (info.includes("FIGURES")) {
@@ -291,7 +283,12 @@
             return;
         }
         
-        baseScale = window.innerWidth / mapImg.naturalWidth;
+        const scaleX = window.innerWidth / mapImg.naturalWidth;
+        const scaleY = window.innerHeight / mapImg.naturalHeight;
+        
+        // ¡NUEVA LÓGICA DE ESCALA! Nos aseguramos de que encaje perfectamente a lo alto y a lo ancho, dejando un 2% de margen para que respire.
+        baseScale = Math.min(scaleX, scaleY) * 0.98;
+        
         if (baseScale > 1) baseScale = 1;
 
         setZoomState(0, null, null, true); 
@@ -327,8 +324,10 @@
 
         if (state === 0) {
             currentScale = baseScale;
-            currentX = 0;
-            currentY = Math.max(0, (window.innerHeight - (mapImg.naturalHeight * baseScale)) / 2);
+            // Al calcular la posición, lo centramos matemáticamente en la pantalla
+            currentX = (window.innerWidth - (mapImg.naturalWidth * baseScale)) / 2;
+            currentY = (window.innerHeight - (mapImg.naturalHeight * baseScale)) / 2;
+            
             container.style.transform = `translate(${currentX}px, ${currentY}px) scale(${currentScale})`;
             
             document.getElementById('side-menu').classList.remove('visible');
