@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HALL 2 - Ultimate Precision Map V7</title>
+    <title>HALL 2 - Ultimate Precision Map V8</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -64,7 +64,7 @@
         position: absolute; bottom: 150%; left: 50%;
         transform: translateX(-50%) translateY(10px) scale(calc(1 / var(--map-scale)));
         transform-origin: bottom center;
-        width: 340px; 
+        width: 360px; /* Un pelín más ancho para asegurar que caben los nombres largos */
         background: white; border-radius: 12px;
         box-shadow: 0 20px 50px rgba(0,0,0,0.3);
         opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
@@ -82,7 +82,7 @@
     .tooltip-cell:not(:last-child) { border-right: 1px solid #edf2f7; } 
     
     .tooltip-label { color: var(--text-gray); font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;}
-    .tooltip-value { font-size: 16px; font-weight: 800; color: #1f2937; text-align: center; line-height: 1.1;}
+    .tooltip-value { font-size: 15px; font-weight: 800; color: #1f2937; text-align: center; line-height: 1.1;}
     
     .tooltip-footer { padding: 14px; font-size: 15px; font-weight: 800; color: white; background: var(--verde-deep); text-align: center; }
     .mesa.agotada .tooltip-footer { background: var(--rojo-sold); }
@@ -91,13 +91,13 @@
     /* --- MENÚ LATERAL (BACK) --- */
     #side-menu {
         position: fixed; 
-        right: -150px; /* Escondido por defecto */
-        bottom: 85px;  /* Justo encima del selector de zoom */
+        right: -150px; 
+        bottom: 100px;  /* MÁS ARRIBA: Cambiado de 85px a 100px para que respire mejor */
         transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
         z-index: 20000;
         display: flex; flex-direction: column; gap: 10px;
     }
-    #side-menu.visible { right: 30px; } /* Se alinea verticalmente con los botones de zoom */
+    #side-menu.visible { right: 30px; } 
 
     .btn-back {
         background: white; border: none; padding: 12px 20px; border-radius: 50px;
@@ -105,7 +105,11 @@
         box-shadow: 0 10px 25px rgba(0,0,0,0.15); cursor: pointer;
         display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s;
     }
-    .btn-back:hover { transform: scale(1.05); background: #f8fafc; color: var(--rojo-sold); }
+    .btn-back:hover { 
+        transform: scale(1.05); 
+        background: #f8fafc; 
+        color: var(--verde-deep); /* HOVER ARREGLADO: Ahora es verde en lugar de rojo */
+    }
 
     /* --- SELECTOR RÁPIDO DE ZOOM (UI FLOTANTE) --- */
     #zoom-ui {
@@ -134,11 +138,10 @@
     #loupe-inner { position: absolute; transform-origin: 0 0; pointer-events: none; will-change: transform; }
     #loupe .custom-tooltip-wrapper { display: none !important; }
 
-    /* --- RESPONSIVE MOBILE --- */
     @media(max-width: 768px) {
-        #side-menu { display: none; } /* En móvil usamos el "x1" como botón de volver */
+        #side-menu { display: none; } 
         #zoom-ui { right: 50%; transform: translateX(50%); bottom: 25px; }
-        .custom-tooltip-wrapper { width: 320px; }
+        .custom-tooltip-wrapper { width: 340px; }
         #loupe { display: none !important; } 
     }
 </style>
@@ -194,12 +197,13 @@
                 let zoneName = parts.length >= 2 ? parts[1] : "-";
                 let tableNum = parts.length >= 3 ? parts[2] : (parts[1] || "0"); 
 
+                // NOMBRES COMPLETOS AÑADIDOS AQUÍ
                 if (info.includes("MANGACOM")) {
-                    catName = "Manga";
+                    catName = "Manga & Comics";
                 } else if (info.includes("FIGURES")) {
-                    catName = "Figures";
+                    catName = "Figures & Dolls";
                 } else if (info.includes("RETRO")) {
-                    catName = "Retro";
+                    catName = "Retro & Fashion";
                     zoneName = "-";
                     tableNum = parts[1]; 
                 }
