@@ -23,13 +23,12 @@
         position: relative; overflow: hidden;
     }
 
-    /* EL MAPA PRINCIPAL */
     #container { 
         position: relative; 
         width: 100%; max-width: 1600px; 
         transform-origin: center center; 
         transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); 
-        cursor: crosshair; /* Cursor para invitar a usar la lupa */
+        cursor: crosshair; 
         touch-action: none; 
     }
 
@@ -38,12 +37,14 @@
     .is-zoomed #container { cursor: grab; }
     .is-zoomed #container:active { cursor: grabbing; }
 
-    /* --- MESAS --- */
+    /* --- MESAS (Estilos afinados) --- */
     .mesa { 
-        position: absolute; border: 2px solid var(--verde-base); 
-        background: rgba(46, 204, 113, 0.25); box-sizing: border-box; 
-        border-radius: 2px;
-        pointer-events: none; /* Dormidas en vista general */
+        position: absolute; 
+        border: 1px solid var(--verde-base); /* Borde más fino para mesas pequeñas */
+        background: rgba(46, 204, 113, 0.25); 
+        box-sizing: border-box; 
+        border-radius: 1px; /* Radio casi nulo para que sea rectangular */
+        pointer-events: none; 
     }
     
     .is-zoomed .mesa { pointer-events: auto; cursor: pointer; }
@@ -51,9 +52,15 @@
     .mesa.commercial { border-color: #3498db; background: rgba(52, 152, 219, 0.25); }
     .mesa.agotada { background: rgba(231, 76, 60, 0.4) !important; border-color: var(--rojo-sold) !important; cursor: not-allowed; }
 
+    /* Al hacer hover con zoom */
     .is-zoomed .mesa:hover, .is-zoomed .mesa:active { 
-        z-index: 999; border-color: white; box-shadow: 0 0 10px rgba(0,0,0,0.3); background: rgba(46, 204, 113, 0.6);
+        z-index: 999; 
+        border-color: white; 
+        border-width: 1.5px;
+        box-shadow: 0 0 8px rgba(0,0,0,0.3); 
+        background: rgba(46, 204, 113, 0.6);
     }
+    .is-zoomed .mesa.commercial:hover { background: rgba(52, 152, 219, 0.6); }
 
     /* --- TOOLTIPS --- */
     .custom-tooltip-wrapper {
@@ -107,7 +114,7 @@
         border-radius: 50%;
         border: 4px solid white;
         box-shadow: 0 15px 35px rgba(0,0,0,0.4), inset 0 0 15px rgba(0,0,0,0.2);
-        pointer-events: none; /* Para que los clicks traspasen al mapa real */
+        pointer-events: none;
         overflow: hidden;
         z-index: 15000; 
         opacity: 0;
@@ -122,13 +129,12 @@
         transform-origin: 0 0;
         pointer-events: none;
     }
-    /* Ocultamos los tooltips dentro de la lupa para que no se vea feo */
     #loupe .custom-tooltip-wrapper { display: none !important; }
 
     @media(max-width: 768px) {
         #side-menu.visible { right: 50%; transform: translate(50%, 0); top: auto; bottom: 30px; }
         .custom-tooltip-wrapper { width: 260px; }
-        #loupe { display: none !important; } /* Desactivar lupa en móviles */
+        #loupe { display: none !important; } 
     }
 </style>
 </head>
@@ -176,6 +182,7 @@
                 else if (info.includes("RETRO")) { displaySection = "Retro & Fashion"; tableNum = parts[1]; }
                 else displaySection = "Diecast - Zone " + parts[1];
 
+                // PRECIOS ACTUALIZADOS
                 let type = "Collector Table";
                 let price = "100,00 €";
 
@@ -198,7 +205,7 @@
             });
             
             await sincronizarConExcel();
-            syncLoupeContent(); // Clonamos las mesas para la lupa
+            syncLoupeContent();
 
         } catch (e) { console.error("Error cargando mesas:", e); }
     }
@@ -227,7 +234,7 @@
                     }
                 }
             });
-            syncLoupeContent(); // Sincronizamos colores con la lupa
+            syncLoupeContent();
         } catch (err) { console.error("Error sincronizando:", err); }
     }
 
@@ -237,14 +244,13 @@
     const loupe = document.getElementById('loupe');
     const loupeInner = document.getElementById('loupe-inner');
     const loupeSize = 250; 
-    const loupeZoom = 3; // Cuánto aumento tiene la lupa
+    const loupeZoom = 3; 
 
     function syncLoupeContent() {
         loupeInner.innerHTML = document.getElementById('container').innerHTML;
     }
 
     window.addEventListener('pointermove', (e) => {
-        // Solo en PC, si no estamos haciendo zoom y si es con ratón
         if (isZoomed || window.innerWidth < 768 || e.pointerType === 'touch') {
             loupe.classList.remove('visible');
             return;
@@ -252,33 +258,26 @@
 
         const rect = container.getBoundingClientRect();
         
-        // Si el ratón sale del mapa, ocultamos la lupa
         if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
             loupe.classList.remove('visible');
             return;
         }
 
         loupe.classList.add('visible');
-
-        // Posicionar el círculo de la lupa justo en el cursor
         loupe.style.left = (e.clientX - loupeSize / 2) + 'px';
         loupe.style.top = (e.clientY - loupeSize / 2) + 'px';
 
-        // Calcular posición interna para hacer el efecto zoom
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // Forzar al div interior a tener el tamaño exacto del contenedor actual
         loupeInner.style.width = rect.width + 'px';
         loupeInner.style.height = rect.height + 'px';
 
-        // Matemática: Trasladar el contenido para que el cursor coincida con el centro de la lupa
         const tx = (loupeSize / 2) - (x * loupeZoom);
         const ty = (loupeSize / 2) - (y * loupeZoom);
 
         loupeInner.style.transform = `translate(${tx}px, ${ty}px) scale(${loupeZoom})`;
     });
-
 
     // ==========================================
     // MOTOR DE ZOOM Y PAN (ARRASTRAR)
@@ -293,7 +292,6 @@
     container.addEventListener('click', (e) => {
         if (isZoomed || isDragging) return; 
 
-        // Ocultar lupa al hacer click
         loupe.classList.remove('visible');
 
         const rect = container.getBoundingClientRect();
