@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>HALL 2 - Ultimate Precision Map V9</title>
+    <title>HALL 2 - Ultimate Precision Map V10</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
     :root {
@@ -286,7 +286,6 @@
         const scaleX = window.innerWidth / mapImg.naturalWidth;
         const scaleY = window.innerHeight / mapImg.naturalHeight;
         
-        // ¡NUEVA LÓGICA DE ESCALA! Nos aseguramos de que encaje perfectamente a lo alto y a lo ancho, dejando un 2% de margen para que respire.
         baseScale = Math.min(scaleX, scaleY) * 0.98;
         
         if (baseScale > 1) baseScale = 1;
@@ -308,8 +307,10 @@
         currentZoomState = state;
         
         let zoomMultiplier = 1;
-        if (state === 1) zoomMultiplier = window.innerWidth < 768 ? 4.5 : 2.5;
-        if (state === 2) zoomMultiplier = window.innerWidth < 768 ? 8.0 : 6.0;
+        
+        // --- AQUÍ ESTÁ EL CAMBIO PARA MÓVIL (MUCHO MÁS SUAVE Y ABARCABLE) ---
+        if (state === 1) zoomMultiplier = window.innerWidth < 768 ? 3.0 : 2.5; 
+        if (state === 2) zoomMultiplier = window.innerWidth < 768 ? 7.0 : 6.0;
 
         let newScale = baseScale * zoomMultiplier;
 
@@ -324,7 +325,6 @@
 
         if (state === 0) {
             currentScale = baseScale;
-            // Al calcular la posición, lo centramos matemáticamente en la pantalla
             currentX = (window.innerWidth - (mapImg.naturalWidth * baseScale)) / 2;
             currentY = (window.innerHeight - (mapImg.naturalHeight * baseScale)) / 2;
             
